@@ -14,7 +14,7 @@ docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
 
 for svc in *; do
     cd "${SVC_DIR}/$svc"
-    if [[ ! -f Dockerfile]]; then
+    if [[ ! -f Dockerfile ]]; then
         continue
     fi
     UNTAGGED_IMAGE=$(echo "${IMAGE_PREFIX}/delinkcious-${svc}" | sed -e 's/_/-/g' -e 's/-service//g')
