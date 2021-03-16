@@ -10,7 +10,7 @@ import (
 )
 
 func Run() {
-	store, err := sgm.NewDbSocialGraphStore("localhost", 5432, "postgres", "1234rewq")
+	store, err := sgm.NewDbSocialGraphStore("localhost", 5432, "postgres", "postgres")
 	if err != nil {
 		log.Fatal(err)
 	}

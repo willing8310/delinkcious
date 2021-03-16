@@ -16,7 +16,7 @@ jobs:
           go get -u github.com/onsi/ginkgo/ginkgo
           go get -u github.com/onsi/gomega/...
     - setup_remote_docker: 当前circleci账号不支持
-        version: 20.10.2
+        version: 19.03.13
         docker_layer_caching: false
     - run:
         name: build and push docker images
