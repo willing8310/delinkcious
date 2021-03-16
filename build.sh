@@ -17,7 +17,7 @@ for svc in *; do
     if [[ ! -f Dockerfile ]]; then
         continue
     fi
-    UNTAGGED_IMAGE=$(echo "${IMAGE_PREFIX}/delinkcious-${svc}" | sed -e 's/_/-/g' -e 's/-service//g')
+    UNTAGGED_IMAGE=$(echo "${IMAGE_PREFIEX}/delinkcious-${svc}" | sed -e 's/_/-/g' -e 's/-service//g')
     STABLE_IMAGE="${UNTAGGED_IMAGE}:${STABLE_TAG}"
     IMAGE="${UNTAGGED_IMAGE}:${TAG}"
     echo "image: $IMAGE"

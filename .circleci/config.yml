@@ -6,7 +6,7 @@ jobs:
     - image: circleci/postgres:9.6-alpine
       environment: 
         POSTGRES_USER: postgres
-    working_directory: /tmp/delinkcious
+    working_directory: /go/src/github.com/willing8310/delinkcious
     steps:
     - checkout
     - run:
