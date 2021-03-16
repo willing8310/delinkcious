@@ -1,0 +1,121 @@
+package social_graph_manager
+
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"log"
+
+	sq "github.com/Masterminds/squirrel"
+	_ "github.com/lib/pq"
+)
+
+type DBSocialGraphStore struct {
+	db *sql.DB
+	sb sq.StatementBuilderType
+}
+
+func NewDbSocialGraphStore(host string, port int, username string, password string) (store *DBSocialGraphStore, err error) {
+	mask := "host=%s port=%d user=%s password=%s dbname=social_graph_manager sslmode=disable"
+	dcn := fmt.Sprintf(mask, host, port, username, password)
+	log.Println(dcn)
+	db, err := sql.Open("postgres", dcn)
+	if err != nil {
+		return
+	}
+
+	sb := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	err = createSchema(db)
+	if err != nil {
+		return
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return
+	}
+	log.Println("db connected.")
+	store = &DBSocialGraphStore{db, sb}
+	return
+}
+
+func createSchema(db *sql.DB) (err error) {
+	schema := `
+		CREATE TABLE IF NOT EXISTS social_graph (
+			id SERIAL   PRIMARY KEY,
+			followed    TEXT NOT NULL,
+			follower 	  TEXT NOT NULL,
+			UNIQUE (followed, follower)
+		);
+		CREATE INDEX IF NOT EXISTS social_graph_follower_idx ON social_graph(follower);
+		CREATE INDEX IF NOT EXISTS social_graph_followed_idx ON social_graph(followed);
+	`
+
+	_, err = db.Exec(schema)
+	return
+}
+
+func (s *DBSocialGraphStore) Follow(followed string, follower string) (err error) {
+	cmd := s.sb.Insert("social_graph").Columns("followed", "follower").Values(followed, follower)
+	_, err = cmd.RunWith(s.db).Exec()
+	return
+}
+
+func (s *DBSocialGraphStore) Unfollow(followed string, follower string) (err error) {
+	sqlStatement := `
+		DELETE FROM social_graph
+		WHERE followed = $1 and follower = $2;
+	`
+	r, err := s.db.Exec(sqlStatement, followed, follower)
+	// r, err := cmd.RunWith(s.db).Exec()
+	if err != nil {
+		return
+	}
+	rowsAffected, err := r.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	if rowsAffected != 1 {
+		return errors.New("unable to unfollow")
+	}
+	return
+}
+
+func (s *DBSocialGraphStore) GetFollowers(username string) (followers map[string]bool, err error) {
+	followers = map[string]bool{}
+	q := s.sb.Select("follower").From("social_graph").Where(sq.Eq{"followed": username})
+	rows, err := q.RunWith(s.db).Query()
+	if err != nil {
+		return
+	}
+
+	follower := ""
+	for rows.Next() {
+		err = rows.Scan(&follower)
+		if err != nil {
+			return
+		}
+		followers[follower] = true
+	}
+	return
+}
+
+func (s *DBSocialGraphStore) GetFollowing(username string) (following map[string]bool, err error) {
+	following = map[string]bool{}
+	q := s.sb.Select("followed").From("social_graph").Where(sq.Eq{"follower": username})
+	rows, err := q.RunWith(s.db).Query()
+	if err != nil {
+		return
+	}
+	followed := ""
+	for rows.Next() {
+		err = rows.Scan(&followed)
+		if err != nil {
+			return
+		}
+		following[followed] = true
+	}
+	return
+}
