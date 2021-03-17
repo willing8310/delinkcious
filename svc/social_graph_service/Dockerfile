@@ -3,6 +3,7 @@ ADD ./main.go main.go
 ADD ./service service
 
 # RUN go get -d -v
+RUN go get  -t -v ./...
 
 # Build image as a truly static Go binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o /social_graph_service -a -tags netgo -ldflags '-s -w' .
